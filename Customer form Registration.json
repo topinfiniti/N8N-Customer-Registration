@@ -1,0 +1,258 @@
+{
+  "name": "Customer form Registration",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Customer Registration Form",
+        "formDescription": "This is the form to be filled for Indorama AD. Forms must be duly stamped. For the consent form ensure you are using the email address to send us a mail for confirmation",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Company Name"
+            },
+            {
+              "fieldLabel": "FISS Certificate",
+              "fieldType": "file"
+            },
+            {
+              "fieldLabel": "CAC Certificate",
+              "fieldType": "file",
+              "acceptFileTypes": ".pdf"
+            },
+            {
+              "fieldLabel": "Verified Business Email Address",
+              "fieldType": "email"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.6,
+      "position": [
+        -144,
+        -96
+      ],
+      "id": "648e0a19-be4a-4df1-9ac8-768f19335830",
+      "name": "On form submission",
+      "webhookId": "26f28fe8-97c9-42f9-8a23-1bf2c2d9ba65"
+    },
+    {
+      "parameters": {
+        "resource": "folder",
+        "operation": "create",
+        "name": "={{ $json['Company Name'] }}",
+        "options": {
+          "parentFolderId": "01GYWJH2B2DMXCHPQF55CKLQY42RFTB3LA"
+        }
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [
+        64,
+        -112
+      ],
+      "id": "65358959-911a-4d94-9763-230b40894aba",
+      "name": "Create Customer Folder Name",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "v6jkpiHEjGr5Scp3",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fileName": "={{ $('On form submission').item.json['FISS Certificate'][0].filename }}",
+        "parentId": "={{ $('Create Customer Folder Name').item.json.id }}",
+        "binaryData": true,
+        "binaryPropertyName": "FISS_Certificate"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [
+        352,
+        -336
+      ],
+      "id": "f919748f-3279-4803-a0ae-7daa90dde80f",
+      "name": "CAC Certificate",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "v6jkpiHEjGr5Scp3",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fileName": "={{ $json['CAC Certificate'][0].filename }}",
+        "parentId": "={{ $('Create Customer Folder Name').item.json.id }}",
+        "binaryData": true,
+        "binaryPropertyName": "CAC_Certificate"
+      },
+      "type": "n8n-nodes-base.microsoftOneDrive",
+      "typeVersion": 1.1,
+      "position": [
+        368,
+        -208
+      ],
+      "id": "6e0e86ce-46d6-4d9d-8c35-f96a9f7ebeac",
+      "name": "FISS Certificate",
+      "credentials": {
+        "microsoftOneDriveOAuth2Api": {
+          "id": "v6jkpiHEjGr5Scp3",
+          "name": "Microsoft Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        208,
+        -240
+      ],
+      "id": "28367ec9-314b-41a0-8822-019538c27fe9",
+      "name": "Merge All attachments"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json['Verified Business Email Address'] }}",
+        "subject": "Customer Registration",
+        "message": "=Dear  {{ $json['Company Name'] }},\n\nWe are super excited in having interest in us to transact with us. \n\nWe have received your application and we will get back to you shortly.\n\nYou can visit our website to know us more more.\n\nThanks\nMarketing Team",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        48,
+        96
+      ],
+      "id": "a0ed8525-ab8e-4ca3-bbe1-c6f116098562",
+      "name": "Send a message",
+      "webhookId": "11b93176-6dd8-49d1-99d6-9f184ce96503",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "v3mDDgi3zL1Yehae",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C0BP5MCJRU0",
+          "mode": "list",
+          "cachedResultName": "n8n-testing"
+        },
+        "text": "=Dear Paul, this is to inform you that  {{ $('On form submission').item.json['Company Name'] }} have submitted his registration form.\n\nThese forms have been uploaded:\n{{ $('On form submission').item.json['FISS Certificate'] }}\n{{ $('On form submission').item.json['FISS Certificate'][0].filename }}\n{{ $('On form submission').item.json['CAC Certificate'][0] }}\n{{ $('On form submission').item.json['CAC Certificate'][0].filename }}\n\nKindly process",
+        "otherOptions": {}
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        272,
+        96
+      ],
+      "id": "b919aec3-f5fc-40df-82b2-719b6b5705b7",
+      "name": "Send a message1",
+      "webhookId": "55935b86-c306-47dd-b996-bfb7ee8b0f2a",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "GYlldsqon9j4o06G",
+          "name": "Slack account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Create Customer Folder Name",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge All attachments",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Customer Folder Name": {
+      "main": [
+        [
+          {
+            "node": "Merge All attachments",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "CAC Certificate": {
+      "main": [
+        []
+      ]
+    },
+    "Merge All attachments": {
+      "main": [
+        [
+          {
+            "node": "CAC Certificate",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FISS Certificate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "f7bf5321-f3a9-47d7-9609-d1a1616a061e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e321569dc2d1b1883020ffa12ba64376b44e0b78d625f788fdc380ee77b7c0b5"
+  },
+  "nodeGroups": [],
+  "id": "BDp3wes6cJXpTIb5",
+  "tags": []
+}
